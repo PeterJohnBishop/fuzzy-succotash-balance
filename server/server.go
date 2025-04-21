@@ -1,26 +1,27 @@
 package server
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
-func StartServer() {
-	log.Println("Starting Server")
+func StartServer(db *sql.DB) {
+	log.Println("Starting Server container")
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	port := os.Getenv("GIN_PORT")
 
 	r := gin.Default()
+	err := r.SetTrustedProxies([]string{"172.16.0.0/12"})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	setupRoutes(r, port)
 	loadTestingRoutes(r)
 
-	log.Printf("Listening on %s", port)
 	r.Run(port)
 }

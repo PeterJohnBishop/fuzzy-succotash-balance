@@ -1,11 +1,17 @@
 package main
 
 import (
-	"fluzzy-succotash-balance/main.go/server"
+	"database/sql"
+
+	"fuzzy-succotash-balance/main.go/database"
+	"fuzzy-succotash-balance/main.go/server"
 	"log"
 )
 
+var db *sql.DB
+
 func main() {
 	log.Println("Starting Fuzzy-Succotash-Balance")
-	server.StartServer()
+	db := database.ConnectPSQL(db)
+	server.StartServer(db)
 }

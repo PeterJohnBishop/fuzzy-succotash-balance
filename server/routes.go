@@ -10,7 +10,7 @@ import (
 
 func setupRoutes(r *gin.Engine, port string) {
 
-	r.GET("/", func(c *gin.Context) {
+	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"msg": fmt.Sprintf("Drinking Gin on %s", port),
 		})

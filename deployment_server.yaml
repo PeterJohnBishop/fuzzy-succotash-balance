@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fuzzy-succotash-balance
+  labels:
+    app: fuzzy-succotash-balance
+spec:
+  replicas: 3  # adjust based on scaling needs
+  selector:
+    matchLabels:
+      app: fuzzy-succotash-balance
+  template:
+    metadata:
+      labels:
+        app: fuzzy-succotash-balance
+    spec:
+      containers:
+        - name: fuzzy-succotash-balance
+          image: peterjbishop/fuzzy-succotash-balance:latest  
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080  # 3000 for Node.js, 8080 for Go
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: PORT
+              value: "8080"  # or "3000" for Node.js
+            - name: GIN_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: GIN_PORT
+            
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health  # make sure your app has a health endpoint
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      restartPolicy: Always
