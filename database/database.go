@@ -6,15 +6,9 @@ import (
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/joho/godotenv"
 )
 
 func ConnectPSQL(db *sql.DB) *sql.DB {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	host := os.Getenv("PSQL_HOST")
 	portStr := os.Getenv("PSQL_PORT")
