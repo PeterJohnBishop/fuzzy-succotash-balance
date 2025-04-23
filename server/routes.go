@@ -1,11 +1,14 @@
 package server
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
+
+	"fuzzy-succotash-balance/main.go/database"
 
 	"github.com/gin-gonic/gin"
 )
@@ -136,6 +139,21 @@ func loadTestingRoutes(r *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{
 			"duration": duration.String(),
 			"results":  response,
+		})
+	})
+}
+
+func addUserRoutes(r *gin.Engine, db *sql.DB) {
+	r.GET("/users/", func(c *gin.Context) {
+		users, err := database.GetUsers(db, c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Users found!",
+			"users":   users,
 		})
 	})
 }
