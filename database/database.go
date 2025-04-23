@@ -35,3 +35,34 @@ func ConnectPSQL(db *sql.DB) *sql.DB {
 	log.Printf("Connected to Postgres container on :%s", portStr)
 	return mydb
 }
+
+func CreateUpdatedAtTrigger(db *sql.DB) error {
+	triggerFunc := `
+	CREATE OR REPLACE FUNCTION update_updated_at_column()
+	RETURNS TRIGGER AS $$
+	BEGIN
+		NEW.updated_at = NOW();
+		RETURN NEW;
+	END;
+	$$ LANGUAGE plpgsql;
+	`
+	if _, err := db.Exec(triggerFunc); err != nil {
+		return fmt.Errorf("error creating trigger function: %w", err)
+	}
+
+	return nil
+}
+
+func CreateUpdatedAtTriggerForTable(db *sql.DB, tableName string) error {
+	trigger := fmt.Sprintf(`
+	CREATE TRIGGER update_%s_updated_at
+	BEFORE UPDATE ON %s
+	FOR EACH ROW
+	EXECUTE PROCEDURE update_updated_at_column();`, tableName, tableName)
+
+	_, err := db.Exec(trigger)
+	if err != nil {
+		return fmt.Errorf("could not create trigger for table %s: %w", tableName, err)
+	}
+	return nil
+}
