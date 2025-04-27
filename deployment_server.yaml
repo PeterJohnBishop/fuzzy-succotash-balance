@@ -5,7 +5,7 @@ metadata:
   labels:
     app: fuzzy-succotash-balance
 spec:
-  replicas: 3  # adjust based on scaling needs
+  replicas: 3
   selector:
     matchLabels:
       app: fuzzy-succotash-balance
@@ -16,21 +16,41 @@ spec:
     spec:
       containers:
         - name: fuzzy-succotash-balance
-          image: peterjbishop/fuzzy-succotash-balance:latest  
+          image: peterjbishop/fuzzy-succotash-balance:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8080  # 3000 for Node.js, 8080 for Go
+            - containerPort: 8080
           env:
             - name: ENVIRONMENT
               value: "production"
             - name: PORT
-              value: "8080"  # or "3000" for Node.js
+              value: "8080"
             - name: GIN_PORT
               valueFrom:
                 secretKeyRef:
                   name: app-secret
                   key: GIN_PORT
-            
+            - name: PSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: PSQL_USER
+            - name: PSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: PSQL_PASSWORD
+            - name: PSQL_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: PSQL_DBNAME
+            - name: PSQL_HOST
+              value: "postgres"
+            - name: PSQL_PORT
+              value: "5432"
+            - name: PSQL_SSLMODE
+              value: "disable"
           resources:
             requests:
               memory: "128Mi"
@@ -40,7 +60,7 @@ spec:
               cpu: "500m"
           livenessProbe:
             httpGet:
-              path: /health  # make sure your app has a health endpoint
+              path: /health
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
