@@ -5,17 +5,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 )
 
 func ConnectPSQL(db *sql.DB) *sql.DB {
 
-	host := os.Getenv("PSQL_HOST")
-	portStr := os.Getenv("PSQL_PORT")
-	port, err := strconv.Atoi(portStr)
-	if err != nil {
-		fmt.Println("Invalid port number:", err)
-	}
+	host := "postgres"
+	port := 5432
 	user := os.Getenv("PSQL_USER")
 	password := os.Getenv("PSQL_PASSWORD")
 	dbname := os.Getenv("PSQL_DBNAME")
@@ -32,7 +27,7 @@ func ConnectPSQL(db *sql.DB) *sql.DB {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("Connected to Postgres container on :%s", portStr)
+	log.Printf("Connected to Postgres container on :%d", port)
 	return mydb
 }
 
