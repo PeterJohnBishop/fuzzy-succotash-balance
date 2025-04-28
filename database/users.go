@@ -3,8 +3,10 @@ package database
 import (
 	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 )
 
 func CreateUsersTable(db *sql.DB) error {
@@ -49,6 +51,116 @@ func CreateUser(db *sql.DB, c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "User created!"})
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func Login(db *sql.DB, c *gin.Context) {
+	var req LoginRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	var user User
+	query := `SELECT id, name, email, password, avatar, online, created_at, updated_at FROM users WHERE email = $1`
+	err := db.QueryRowContext(c, query, req.Email).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Avatar, &user.Online, &user.CreatedAt, &user.UpdatedAt)
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	} else if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if !CheckPasswordHash(req.Password, user.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password Verification Failed"})
+		return
+	}
+
+	userClaims := UserClaims{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		StandardClaims: jwt.StandardClaims{
+			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
+		},
+	}
+
+	token, err := NewAccessToken(userClaims)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+		return
+	}
+
+	refreshToken, err := NewRefreshToken(userClaims.StandardClaims)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "Login Success",
+		"token":        token,
+		"refreshToken": refreshToken,
+		"user":         user,
+	})
+}
+
+func RefreshTokenHandler(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		const userIDKey ContextKey = "userID"
+
+		id, ok := c.Request.Context().Value(userIDKey).(string)
+		if !ok || id == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ID not found in context"})
+			return
+		}
+
+		var user User
+		query := `SELECT id, name, email, password, avatar, online, created_at, updated_at FROM users WHERE id = $1`
+		err := db.QueryRowContext(c, query, id).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.Avatar, &user.Online, &user.CreatedAt, &user.UpdatedAt)
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		} else if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		userClaims := UserClaims{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			StandardClaims: jwt.StandardClaims{
+				IssuedAt:  time.Now().Unix(),
+				ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
+			},
+		}
+
+		token, err := NewAccessToken(userClaims)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+			return
+		}
+
+		refreshToken, err := NewRefreshToken(userClaims.StandardClaims)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate refresh token"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "Token Refreshed",
+			"token":        token,
+			"refreshToken": refreshToken,
+		})
+	}
 }
 
 func GetUsers(db *sql.DB, c *gin.Context) {

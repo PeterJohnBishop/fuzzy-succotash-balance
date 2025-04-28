@@ -28,11 +28,14 @@ func setupRoutes(r *gin.Engine, port string) {
 }
 
 func addUserRoutes(r *gin.Engine, db *sql.DB) {
+	r.POST("/login", func(c *gin.Context) {
+		database.Login(db, c)
+	})
+	r.POST("/register", func(c *gin.Context) {
+		database.CreateUser(db, c)
+	})
 	r.GET("/users", func(c *gin.Context) {
 		database.GetUsers(db, c)
-	})
-	r.POST("/users", func(c *gin.Context) {
-		database.CreateUser(db, c)
 	})
 	r.GET("/users/:id", func(c *gin.Context) {
 		database.GetUserByID(db, c)
@@ -82,6 +85,7 @@ func addOrderRoutes(r *gin.Engine, db *sql.DB) {
 }
 
 func addChatMessageingRoutes(r *gin.Engine, db *sql.DB) {
+
 	r.POST("/chats", func(c *gin.Context) {
 		database.CreateChat(db, c)
 	})
