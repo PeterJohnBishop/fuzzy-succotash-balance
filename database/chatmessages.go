@@ -93,6 +93,8 @@ func CreateChat(db *sql.DB, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	var time = time.Now()
+	chat.ChatID = GenerateChatID(time)
 
 	query := `INSERT INTO chats (chat_id, users, messages, created_at, updated_at)
 	          VALUES ($1, $2, $3, NOW(), NOW())`
@@ -112,11 +114,17 @@ func CreateMessage(db *sql.DB, c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	messageID, err := GenerateMessageID(msg.Sender)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	msg.MessageID = messageID
 
 	query := `INSERT INTO messages (message_id, chat_id, sender, text, media, created_at)
 	          VALUES ($1, $2, $3, $4, $5, NOW())`
 
-	_, err := db.ExecContext(c, query, msg.MessageID, msg.Chat, msg.Sender, msg.Text, pq.Array(msg.Media))
+	_, err = db.ExecContext(c, query, msg.MessageID, msg.Chat, msg.Sender, msg.Text, pq.Array(msg.Media))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
