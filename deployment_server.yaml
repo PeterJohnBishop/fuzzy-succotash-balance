@@ -35,6 +35,11 @@ spec:
                 secretKeyRef:
                   name: app-secret
                   key: TOKEN_SECRET
+            - name: REFRESH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: REFRESH_TOKEN_SECRET
             - name: PSQL_USER
               valueFrom:
                 secretKeyRef:

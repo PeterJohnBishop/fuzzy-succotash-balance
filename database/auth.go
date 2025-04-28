@@ -22,7 +22,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-var AccessTokenSecret = []byte(os.Getenv("JWT_SECRET"))
+var AccessTokenSecret = []byte(os.Getenv("TOKEN_SECRET"))
 var RefreshTokenSecret = []byte(os.Getenv("REFRESH_TOKEN_SECRET"))
 var AccessTokenTTL = time.Minute * 15
 var RefreshTokenTTL = time.Hour * 24 * 7

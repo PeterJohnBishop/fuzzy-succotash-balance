@@ -41,16 +41,25 @@ func CreateUser(db *sql.DB, c *gin.Context) {
 	id, err := uuid.NewV1()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
+
 	user.ID = "user_" + id.String()
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// ⚡️ Hash the password before inserting
+	hashedPassword, err := HashedPassword(user.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
 	query := `INSERT INTO users (id, name, email, password, avatar, online, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`
-	_, err = db.ExecContext(c, query, user.ID, user.Name, user.Email, user.Password, user.Avatar, user.Online)
+	_, err = db.ExecContext(c, query, user.ID, user.Name, user.Email, hashedPassword, user.Avatar, user.Online)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -83,7 +92,7 @@ func Login(db *sql.DB, c *gin.Context) {
 		return
 	}
 
-	if !CheckPasswordHash(user.Password, req.Password) {
+	if !CheckPasswordHash(req.Password, user.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password Verification Failed"})
 		return
 	}
