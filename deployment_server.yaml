@@ -30,6 +30,11 @@ spec:
                 secretKeyRef:
                   name: app-secret
                   key: GIN_PORT
+            - name: TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: TOKEN_SECRET
             - name: PSQL_USER
               valueFrom:
                 secretKeyRef:

@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt"
 )
 
 func CreateUsersTable(db *sql.DB) error {
 	query := `
 	CREATE TABLE IF NOT EXISTS users (
-		id UUID NOT NULL PRIMARY KEY,
+		id TEXT UNIQUE NOT NULL PRIMARY KEY,
 		name TEXT UNIQUE NOT NULL,
 		email TEXT UNIQUE NOT NULL,
 		password TEXT NOT NULL,
@@ -37,6 +38,11 @@ func SeedNewUsers(count int, db *sql.DB) error {
 
 func CreateUser(db *sql.DB, c *gin.Context) {
 	var user User
+	id, err := uuid.NewV1()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	}
+	user.ID = "user_" + id.String()
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -44,7 +50,7 @@ func CreateUser(db *sql.DB, c *gin.Context) {
 
 	query := `INSERT INTO users (id, name, email, password, avatar, online, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())`
-	_, err := db.ExecContext(c, query, user.ID, user.Name, user.Email, user.Password, user.Avatar, user.Online)
+	_, err = db.ExecContext(c, query, user.ID, user.Name, user.Email, user.Password, user.Avatar, user.Online)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -77,7 +83,7 @@ func Login(db *sql.DB, c *gin.Context) {
 		return
 	}
 
-	if !CheckPasswordHash(req.Password, user.Password) {
+	if !CheckPasswordHash(user.Password, req.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password Verification Failed"})
 		return
 	}
