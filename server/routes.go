@@ -4,9 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"runtime"
-	"sync"
-	"time"
 
 	"fuzzy-succotash-balance/main.go/database"
 
@@ -23,137 +20,92 @@ func setupRoutes(r *gin.Engine, port string) {
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.Status(204) // No Content
 	})
-
 	r.GET("/apple-touch-icon.png", func(c *gin.Context) {
 		c.Status(204)
 	})
-
 	r.GET("/apple-touch-icon-precomposed.png", func(c *gin.Context) {
 		c.Status(204)
 	})
 }
 
-func loadTestingRoutes(r *gin.Engine) {
-
-	r.GET("/calc/fibonacci", func(c *gin.Context) {
-		start := time.Now()
-
-		nth := 50000
-		result := computeFibonacci(nth) // Calculate to the nth value
-
-		duration := time.Since(start)
-
-		c.JSON(http.StatusOK, gin.H{
-			"duration": duration.String(),
-			"result":   fmt.Sprintf("%s...", result.String()[:10]), // Return just a snippet
-		})
+func addUserRoutes(r *gin.Engine, db *sql.DB) {
+	r.GET("/users", func(c *gin.Context) {
+		database.GetUsers(db, c)
 	})
-
-	r.GET("/calc/pi", func(c *gin.Context) {
-		start := time.Now()
-
-		iterations := 50000
-		result := calculatePi(iterations) // calculate pi to x iterations
-
-		duration := time.Since(start)
-
-		c.JSON(http.StatusOK, gin.H{
-			"duration": duration.String(),
-			"result":   fmt.Sprintf("Pi approximation at %d iterations: %.15f\n", iterations, result), // Return just a snippet
-		})
+	r.POST("/users", func(c *gin.Context) {
+		database.CreateUser(db, c)
 	})
-
-	r.GET("/calc/prime", func(c *gin.Context) {
-		start := time.Now()
-
-		limit := 50000
-		result := countPrime(limit) // calculate number of prime numbers in limit
-
-		duration := time.Since(start)
-
-		c.JSON(http.StatusOK, gin.H{
-			"duration": duration.String(),
-			"result":   fmt.Sprintf("%d primes", result), // Return count
-		})
+	r.GET("/users/:id", func(c *gin.Context) {
+		database.GetUserByID(db, c)
 	})
-
-	r.GET("/calc/all/inline", func(c *gin.Context) {
-		start := time.Now()
-
-		nth := 50000
-		sequence := computeFibonacci(nth)
-
-		limit := 50000
-		result := countPrime(limit)
-
-		iterations := 50000
-		pi := calculatePi(iterations)
-
-		duration := time.Since(start)
-
-		c.JSON(http.StatusOK, gin.H{
-			"duration":  duration.String(),
-			"Fibonacci": fmt.Sprintf("%s...", sequence.String()[:10]),
-			"Pi":        fmt.Sprintf("Pi approximation at %d iterations: %.15f\n", iterations, pi),
-			"Primes":    fmt.Sprintf("%d primes", result),
-		})
+	r.PUT("/users/:id", func(c *gin.Context) {
+		database.UpdateUserByID(db, c)
 	})
-
-	type allResponse struct {
-		Fibonacci string `json:"fibonacci"`
-		Pi        string `json:"pi"`
-		Primes    string `json:"primes"`
-	}
-
-	r.GET("/calc/all/concurrent", func(c *gin.Context) {
-		start := time.Now()
-		runtime.GOMAXPROCS(runtime.NumCPU())
-		var response allResponse
-		var wg sync.WaitGroup
-		wg.Add(3)
-
-		nth := 50000
-		go func() {
-			defer wg.Done()
-			result := computeFibonacci(nth)
-			response.Fibonacci = fmt.Sprintf("%s...", result.String()[:10])
-		}()
-
-		limit := 50000
-		go func() {
-			defer wg.Done()
-			result := countPrime(limit)
-			response.Primes = fmt.Sprintf("%d primes", result)
-		}()
-
-		iterations := 50000
-		go func() {
-			defer wg.Done()
-			result := calculatePi(iterations)
-			response.Pi = fmt.Sprintf("Pi approximation at %d iterations: %.15f", iterations, result)
-		}()
-
-		wg.Wait()
-		duration := time.Since(start)
-
-		c.JSON(http.StatusOK, gin.H{
-			"duration": duration.String(),
-			"results":  response,
-		})
+	r.DELETE("/users/:id", func(c *gin.Context) {
+		database.DeleteUserByID(db, c)
 	})
 }
 
-func addUserRoutes(r *gin.Engine, db *sql.DB) {
-	r.GET("/users/", func(c *gin.Context) {
-		users, err := database.GetUsers(db, c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err,
-			})
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Users found!",
-			"users":   users,
-		})
+func addProductRoutes(r *gin.Engine, db *sql.DB) {
+	r.GET("/products", func(c *gin.Context) {
+		database.GetProducts(db, c)
+	})
+	r.POST("/products", func(c *gin.Context) {
+		database.CreateProduct(db, c)
+	})
+	r.GET("/products/:upc", func(c *gin.Context) {
+		database.GetProductByUPC(db, c)
+	})
+	r.PUT("/products/:upc", func(c *gin.Context) {
+		database.UpdateProductByUPC(db, c)
+	})
+	r.DELETE("/products/:upc", func(c *gin.Context) {
+		database.DeleteProductByUPC(db, c)
+	})
+}
+
+func addOrderRoutes(r *gin.Engine, db *sql.DB) {
+	r.GET("/orders", func(c *gin.Context) {
+		database.GetOrders(db, c)
+	})
+	r.POST("/orders", func(c *gin.Context) {
+		database.CreateOrder(db, c)
+	})
+	r.GET("/orders/:orderNumber", func(c *gin.Context) {
+		database.GetOrderByNumber(db, c)
+	})
+	r.PUT("/orders/:orderNumber", func(c *gin.Context) {
+		database.UpdateOrderByNumber(db, c)
+	})
+	r.DELETE("/orders/:orderNumber", func(c *gin.Context) {
+		database.DeleteOrderByNumber(db, c)
+	})
+}
+
+func addChatMessageingRoutes(r *gin.Engine, db *sql.DB) {
+	r.POST("/chats", func(c *gin.Context) {
+		database.CreateChat(db, c)
+	})
+	r.POST("/messages", func(c *gin.Context) {
+		database.CreateMessage(db, c)
+	})
+	r.GET("/chats", func(c *gin.Context) {
+		database.GetAllChats(db, c)
+	})
+	r.GET("/chats/:chatID", func(c *gin.Context) {
+		database.GetChatByID(db, c)
+	})
+	r.GET("/chats/:chatID/messages", func(c *gin.Context) {
+		database.GetChatWithMessages(db, c)
+	})
+	r.PUT("/chats/:chatID", func(c *gin.Context) {
+		database.UpdateChatByID(db, c)
+	})
+
+	r.DELETE("/chats/:chatID", func(c *gin.Context) {
+		database.DeleteChatByID(db, c)
+	})
+	r.DELETE("/messages/:messageID", func(c *gin.Context) {
+		database.DeleteMessageByID(db, c)
 	})
 }

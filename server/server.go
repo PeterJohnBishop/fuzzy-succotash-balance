@@ -21,8 +21,10 @@ func StartServer(db *sql.DB) {
 	}
 
 	setupRoutes(r, port)
-	loadTestingRoutes(r)
 	addUserRoutes(r, db)
+	addProductRoutes(r, db)
+	addOrderRoutes(r, db)
+	addChatMessageingRoutes(r, db)
 
 	r.Run(port)
 }
