@@ -24,4 +24,4 @@ go.work.sum
 # env file
 .env
 
-/node/node_modules/
+/node-server/node_modules/
