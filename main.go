@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"fuzzy-succotash-balance/main.go/database"
-	"fuzzy-succotash-balance/main.go/server"
+	"fuzzy-succotash-balance/main.go/go-server"
 	"log"
 )
 
