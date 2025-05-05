@@ -29,6 +29,10 @@ func setupRoutes(r *gin.Engine, port string, db *sql.DB) {
 		table := c.Param("table")
 		database.DropTable(db, c, table)
 	})
+	r.POST("/create/:table", func(c *gin.Context) {
+		table := c.Param("table")
+		database.CreateTable(db, c, table)
+	})
 }
 
 func addUserRoutes(r *gin.Engine, db *sql.DB) {

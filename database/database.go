@@ -20,7 +20,7 @@ func ConnectPSQL(db *sql.DB) *sql.DB {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-	fmt.Println("Connecting with:", psqlInfo)
+	// fmt.Println("Connecting with:", psqlInfo)
 
 	mydb, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
@@ -32,6 +32,17 @@ func ConnectPSQL(db *sql.DB) *sql.DB {
 		panic(err)
 	}
 	log.Printf("Connected to Postgres container on :%d", port)
+	CreateUsersTable(mydb)
+	CreateProductsTable(mydb)
+	CreateOrdersTable(mydb)
+	CreateChatsTable(mydb)
+	CreateMessagesTable(mydb)
+	CreateUpdatedAtTrigger(mydb)
+	CreateUpdatedAtTriggerForTable(mydb, "products")
+	CreateUpdatedAtTriggerForTable(mydb, "orders")
+	CreateUpdatedAtTriggerForTable(mydb, "users")
+	CreateUpdatedAtTriggerForTable(mydb, "chats")
+	CreateUpdatedAtTriggerForTable(mydb, "messages")
 	return mydb
 }
 
