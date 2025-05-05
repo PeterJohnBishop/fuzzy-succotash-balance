@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func setupRoutes(r *gin.Engine, port string) {
+func setupRoutes(r *gin.Engine, port string, db *sql.DB) {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"msg": fmt.Sprintf("Drinking Gin on %s", port),
@@ -24,6 +24,10 @@ func setupRoutes(r *gin.Engine, port string) {
 	})
 	r.GET("/apple-touch-icon-precomposed.png", func(c *gin.Context) {
 		c.Status(204)
+	})
+	r.POST("/drop/:table", func(c *gin.Context) {
+		table := c.Param("table")
+		database.DropTable(db, c, table)
 	})
 }
 

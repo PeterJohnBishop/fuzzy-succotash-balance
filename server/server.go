@@ -23,7 +23,7 @@ func StartServer(db *sql.DB) {
 		log.Fatal(err)
 	}
 
-	setupRoutes(r, port)
+	setupRoutes(r, port, db)
 	addUserRoutes(r, db)
 	addProductRoutes(r, db)
 	addOrderRoutes(r, db)

@@ -4,7 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ConnectPSQL(db *sql.DB) *sql.DB {
@@ -61,4 +64,56 @@ func CreateUpdatedAtTriggerForTable(db *sql.DB, tableName string) error {
 		return fmt.Errorf("could not create trigger for table %s: %w", tableName, err)
 	}
 	return nil
+}
+
+func DropTable(db *sql.DB, c *gin.Context, tableName string) error {
+	query := fmt.Sprintf(`DROP TABLE IF EXISTS "%s" CASCADE`, tableName)
+
+	_, err := db.Exec(query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return err
+	}
+
+	log.Printf("Table %s dropped successfully.\n", tableName)
+	c.JSON(http.StatusOK, gin.H{"message": "Table dropped successfully"})
+	return nil
+}
+
+func CreateTable(db *sql.DB, c *gin.Context, tableName string) {
+	switch tableName {
+	case "products":
+		err := CreateProductsTable(db)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	case "orders":
+		err := CreateOrdersTable(db)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	case "users":
+		err := CreateUsersTable(db)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	case "chats":
+		err := CreateChatsTable(db)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	case "messages":
+		err := CreateMessagesTable(db)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid table name"})
+		return
+	}
 }
